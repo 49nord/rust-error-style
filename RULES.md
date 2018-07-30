@@ -20,7 +20,7 @@ Documents that inspired this, some of which might be more of a historical read, 
 
 * ["Error Handling in Rust" (Andrew Gallant)](https://blog.burntsushi.net/rust-error-handling/),
 * [failure docs](https://boats.gitlab.io/failure/),
-* ["Annoucing failure"](https://boats.gitlab.io/blog/post/2017-11-16-announcing-failure/),
+* ["Announcing failure"](https://boats.gitlab.io/blog/post/2017-11-16-announcing-failure/),
 * ["Failure 1.0"](https://boats.gitlab.io/blog/post/2018-02-22-failure-1.0/).
 * [Bay Area Rust Meetup November 2017](https://air.mozilla.org/bay-area-rust-meetup-november-2017/)
 * [Redefining failure (Ed Page)](https://epage.github.io/blog/2018/03/redefining-failure/)
@@ -96,13 +96,13 @@ fn get_user_from_db(user_id: UserId) -> Result<User, DbError> {
 
 ### R4: Prefer `.expect()` over `.unwrap()`.
 
-`.expect()` is the same as `.unwrap()`, except it allows adding a custom message, which in turn is vastly preferrable over a comment:
+`.expect()` is the same as `.unwrap()`, except it allows adding a custom message, which in turn is vastly preferable over a comment:
 
 ```rust
 value.expect("operation did not return meaningful value");
 ```
 
-Variant **R4A**: In some embedded cases such as microcontrollers with mere kilobytes or bytes of memory, it is sometimes preferrable to `unwrap()` to avoid having to include the error message string into the program binary.
+Variant **R4A**: In some embedded cases such as microcontrollers with mere kilobytes or bytes of memory, it is sometimes preferable to `unwrap()` to avoid having to include the error message string into the program binary.
 
 ### R5: Use lower-case, simple messages for `.expect()`.
 
@@ -248,7 +248,7 @@ enum LoadError {
 }
 ```
 
-Note that `LoadError::DataFileRead` has the same signature as `LoadError::Io` earlier, but has no direct `From<io::Error>`, leaving the class extensible in case another-but-different error occurs. This should also be done to simplify the error type, deciding which kinds of errors the client is allowed to distinctly care about is a design decision.
+Note that `LoadError::DataFileRead` has the same signature as `LoadError::Io` earlier, but has no direct `From<io::Error>` implementation, leaving the class extensible in case another-but-different error occurs. This should also be done to simplify the error type, deciding which kinds of errors the client is allowed to distinctly care about is a design decision.
 
 #### P1B: Using backtraces
 
