@@ -51,7 +51,7 @@ Example: [`Vec::pop()`](https://doc.rust-lang.org/stable/std/vec/struct.Vec.html
 Instead of using
 
 ```rust
-if user_id <= 0 {
+if user_id == 0 {
     panic!("user_id must be greater than zero");
 }
 ```
@@ -59,7 +59,7 @@ if user_id <= 0 {
 use `assert!`:
 
 ```rust
-assert!(user_id <= 0, "user_id must be greater than zero");
+assert!(user_id == 0, "user_id must be greater than zero");
 ```
 
 ### R3: Use newtypes to avoid having to panic on API violations.
@@ -80,7 +80,7 @@ impl TryFrom<usize> for UserId {
     // realm of possible outcomes and not an API violation. This avoids a panic
     // in `get_user_from_db`.
     fn try_from(value: usize) -> Result<Self, Self::Error> {
-        if value <= 0 {
+        if value == 0 {
             return Err(UserIdInvalid);
         }
 
