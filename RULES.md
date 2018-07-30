@@ -134,6 +134,38 @@ Never use `.expect()` (see R4) in libraries unless unavoidable due to borrow-che
 
 In general, code will be inspected and every potential panic should have a good, described reason for being there.
 
-### R8: Bubble errors upwards when not handled
+### R8: Bubble errors upwards when not handled.
 
 When errors cannot be handled in a function, they should be passed up the call stack. Ultimately, any error not handled should arrive (possibly wrapped multiple times) in the `main()` function.
+
+### R9: Use error returns in `main`.
+
+In applications, defining main with a (see [RFC 1937](https://github.com/rust-lang/rust/issues/43301)) `Result` return type like
+
+```rust
+fn main() -> Result<(), Box<Error>>
+```
+
+is slightly better than using `.unwrap()` in `main` (see R8):
+
+```
+thread 'main' panicked at 'called `Result::unwrap()` on an `Err`
+value: (DEBUG IMPL OF ERROR TYPE)', libcore/result.rs:945:5
+note: Run with `RUST_BACKTRACE=1` for a backtrace.
+```
+
+becomes
+
+```
+Error: (DEBUG IMPL OF ERROR TYPE)
+```
+
+when using the `?` instead of `.unwrap()`. The extra text cover very little usable information and should be omitted.
+
+Variant **R9A**: When error handling is not set up properly (during prototyping, when dealing with legacy code), using explicit `.expect()`s instead can be necessary due to R4.
+
+### R10: Avoid boxed errors
+
+Especially in embedded contexts, using `Box<Error>` or `failure::Error` must be avoided to not introduce unnecessary heap allocations. In general, no library should return boxed errors.
+
+Exceptions to this guideline are `main` (see `R8`, there is little gain in introducing an error type for main only) and complex functions outside the hot-path in applications where introducing a massive error type bring few gains.
