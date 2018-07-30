@@ -214,10 +214,10 @@ enum LoadError {
 // No more `From<io::Error>` impl.
 
 fn load_from_file<P: AsRef<path::Path>>) -> Result<Data, LoadError> {
-    let mut input_file = fs::File::open(p).map(LoadError::OpenDataFile)?;
+    let mut input_file = fs::File::open(p).map_err(LoadError::OpenDataFile)?;
 
     let mut buf = String::new();
-    input_file.read_to_string(buf).map(LoadError::ReadDataFile)?;
+    input_file.read_to_string(buf).map_err(LoadError::ReadDataFile)?;
 
     // ...
 }
@@ -229,7 +229,7 @@ There are drawbacks: No more `From<io::Error>` conversions due to ambiguity, res
 
 ```rust
 fn load_from_file<P: AsRef<path::Path>>) -> Result<Data, LoadError> {
-    let buf = fs::read_to_string(p).map(/* which error type to map to? */)?;
+    let buf = fs::read_to_string(p).map_err(/* which error type to map to? */)?;
 
     // ...
 }
@@ -271,7 +271,7 @@ impl From<ParseError> for LoadError {
 }
 
 fn load_from_file<P: AsRef<path::Path>>) -> Result<Data, LoadError> {
-    let buf = fs::read_to_string(p).map(LoadError::DataFileRead)?;
+    let buf = fs::read_to_string(p).map_err(LoadError::DataFileRead)?;
 
     for line in buf.lines() {
         let data = parse_line(line)?;
