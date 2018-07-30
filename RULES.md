@@ -40,7 +40,7 @@ Every function has invariants that need to hold true about its inputs; some of w
 
 Example: [`Vec::split_off()`](https://doc.rust-lang.org/stable/std/vec/struct.Vec.html#method.split_off).
 
-**R1A**: It is possible to move some or all of the error handling back into the return value (`Result` or `Option`) if doing reduces the burden on the caller significantly or enables common use cases.
+Variant **R1A**: It is possible to move some or all of the error handling back into the return value (`Result` or `Option`) if doing reduces the burden on the caller significantly or enables common use cases.
 
 Example: [`Vec::pop()`](https://doc.rust-lang.org/stable/std/vec/struct.Vec.html#method.pop).
 
@@ -93,3 +93,45 @@ fn get_user_from_db(user_id: UserId) -> Result<User, DbError> {
     // ...
 }
 ```
+
+### R4: Prefer `.expect()` over `.unwrap()`.
+
+`.expect()` is the same as `.unwrap()`, except it allows adding a custom message. This is vastly preferrable over a comment:
+
+```rust
+value.expect("operation did not return meaningful value");
+```
+
+Variant **R4A**: In some embedded cases such as microcontrollers with mere kilobytes or bytes of memory, it is sometimes preferrable to `unwrap()` to avoid having to include the error message string into the program binary.
+
+### R5: Use lower-case, simple messages for `.expect()`.
+
+When used, `.expect()` messages should be short, start lowercase and report what went wrong. Contrary to the name, it should *not* state what was expected.
+
+```rust
+fs::File::open("foo.txt").expect("could not open data file");
+```
+
+### R6: Avoid unwrapping.
+
+As often as possible, avoid the use of `.expect()` or `.unwrap()`, but use destructuring instead:
+
+```rust
+if let Some(value) = operation() {
+    //
+} else {
+    // `panic!()` can be used here, but there are other options.
+}
+```
+
+### R7: Avoid unwraps, unless mandated by R1.
+
+A panic will cause the currently running thread to end, which might abort the program or put it in a state where a thread is dead. This makes it impossible for callers to recover.
+
+Never use `.expect()` (see R4) in libraries unless unavoidable due to borrow-checker limitations or expensive design flaws. When doing so, add a comment (in addition to the message from R5) explaining why `.expect()` was used in the first place.
+
+In general, code will be inspected and every potential panic should have a good, described reason for being there.
+
+### R8: Bubble errors upwards when not handled
+
+When errors cannot be handled in a function, they should be passed up the call stack. Ultimately, any error not handled should arrive (possibly wrapped multiple times) in the `main()` function.
