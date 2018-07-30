@@ -114,19 +114,7 @@ When used, `.expect()` messages should be short, start lowercase and report what
 fs::File::open("foo.txt").expect("could not open data file");
 ```
 
-### R6: Avoid unwrapping.
-
-As often as possible, avoid the use of `.expect()` or `.unwrap()`, but use destructuring instead:
-
-```rust
-if let Some(value) = operation() {
-    //
-} else {
-    // `panic!()` can be used here, but there are other options.
-}
-```
-
-### R7: Avoid unwraps, unless mandated by R1.
+### R6: Avoid unwraps, unless mandated by R1.
 
 A panic will cause the currently running thread to end, which might abort the program or put it in a state where a thread is dead. This makes it impossible for callers to recover.
 
@@ -134,11 +122,11 @@ Never use `.expect()` (see R4) in libraries unless unavoidable due to borrow-che
 
 In general, code will be inspected and every potential panic should have a good, described reason for being there.
 
-### R8: Bubble errors upwards when not handled.
+### R7: Bubble errors upwards when not handled.
 
 When errors cannot be handled in a function, they should be passed up the call stack. Ultimately, any error not handled should arrive (possibly wrapped multiple times) in the `main()` function.
 
-### R9: Use error returns in `main`.
+### R8: Use error returns in `main`.
 
 In applications, defining main with a (see [RFC 1937](https://github.com/rust-lang/rust/issues/43301)) `Result` return type like
 
@@ -146,7 +134,7 @@ In applications, defining main with a (see [RFC 1937](https://github.com/rust-la
 fn main() -> Result<(), Box<Error>>
 ```
 
-is slightly better than using `.unwrap()` in `main` (see R8):
+is slightly better than using `.unwrap()` in `main` (see R7):
 
 ```
 thread 'main' panicked at 'called `Result::unwrap()` on an `Err`
@@ -162,14 +150,14 @@ Error: (DEBUG IMPL OF ERROR TYPE)
 
 when using the `?` instead of `.unwrap()`. The extra text cover very little usable information and should be omitted.
 
-Variant **R9A**: When error handling is not set up properly (during prototyping, when dealing with legacy code), using explicit `.expect()`s instead can be necessary due to R4.
+Variant **R8A**: When error handling is not set up properly (during prototyping, when dealing with legacy code), using explicit `.expect()`s instead can be necessary due to R4.
 
-### R10: Avoid boxed errors.
+### R9: Avoid boxed errors.
 
 Especially in embedded contexts, using `Box<Error>` or `failure::Error` must be avoided to not introduce unnecessary heap allocations. In general, no library should return boxed errors.
 
-Exceptions to this guideline are `main` (see `R8`, there is little gain in introducing an error type for main only) and complex functions outside the hot-path in applications where introducing a massive error type bring few gains.
+Exceptions to this guideline are `main` (see `R7`, there is little gain in introducing an error type for main only) and complex functions outside the hot-path in applications where introducing a massive error type bring few gains.
 
-### R11: Always use `failure` and `failure_derive` when possible.
+### R10: Always use `failure` and `failure_derive` when possible.
 
 The [failure](https://docs.rs/failure/) crate replaces "manual" error management as well as [error-chain](https://docs.rs/error-chain/). It greatly reduces the amount of boilerplate code and is more flexible than either of the old solutions. Due to its `no_std` compatibility, it is even feasible to use in an embedded environment.
