@@ -161,3 +161,93 @@ Exceptions to this guideline are `main` (see `R7`, there is little gain in intro
 ### R10: Always use `failure` and `failure_derive` when possible.
 
 The [failure](https://docs.rs/failure/) crate replaces "manual" error management as well as [error-chain](https://docs.rs/error-chain/). It greatly reduces the amount of boilerplate code and is more flexible than either of the old solutions. Due to its `no_std` compatibility, it is even feasible to use in an embedded environment.
+
+Currently, community consensus seems be heading towards the failure crate as well.
+
+## Open Questions
+
+Some patterns present themselves repeatedly and can be addressed in different way; often there is no clear consensus on the best way yet.
+
+### Q1: How to distinguish between the same error on multiple lines?
+
+Often, the same error variant can occur multiple times in a single function:
+
+```rust
+use std::{fs, io, path};
+
+#[derive(Debug, Fail)]
+enum LoadError{
+    ParseError,
+    Io(io::Error)
+}
+
+impl From<io::Error> for LoadError {
+    fn from(e: io::Error) -> LoadError {
+        LoadError::Io(e))
+    }
+}
+
+fn load_from_file<P: AsRef<path::Path>>) -> Result<Data, LoadError> {
+    // Early-returns `LoadError::Io` if opening the file fails.
+    let mut input_file = fs::File::open(p)?;
+
+    let mut buf = String::new();
+
+    // Early-returns `LoadError::Io` if reading the file fails.
+    input_file.read_to_string(buf)?;
+
+    // ...
+}
+```
+
+Here, `LoadError::Io` is returned in two different places, with no distinction possible by the consumer of said error.
+
+**Bottom-up error variant definition** (P1A): Solve the problem by defining one error variant per call-site:
+
+```rust
+#[derive(Debug, Fail)]
+enum LoadError{
+    ParseError,
+    OpenDataFile(io::Error),
+    ReadDataFile(io::Error),
+}
+
+// No more `From<io::Error>` impl.
+
+fn load_from_file<P: AsRef<path::Path>>) -> Result<Data, LoadError> {
+    let mut input_file = fs::File::open(p).map(LoadError::OpenDataFile)?;
+
+    let mut buf = String::new();
+    input_file.read_to_string(buf).map(LoadError::ReadDataFile)?;
+
+    // ...
+}
+```
+
+Now selecting the appropriate error and returning it is straightforward.
+
+There are drawbacks: No more `From<io::Error>` conversions due to ambiguity, resulting in more verbose code. A risk of coupling the interface of the function with the implementation also exist, considering the following refactoring:
+
+```rust
+fn load_from_file<P: AsRef<path::Path>>) -> Result<Data, LoadError> {
+    let buf = fs::read_to_string(p).map(/* which error type to map to? */?;
+
+    // ...
+}
+```
+
+For this reason, after having one error type per call site, these variants should be coalesced into fewer that carry enough meaning but hide implementation details. Example:
+
+```rust
+#[derive(Debug, Fail)]
+enum LoadError{
+    ParseError,
+    DataFileRead(io::Error)
+}
+```
+
+Note that `LoadError::DataFileRead` has the same signature as `LoadError::Io` earlier has no direct `From<io::Error>`, leaving the class extensible in case another-but-different error occurs. This should also be done to simplify the error type, deciding which kinds of errors the client is allowed to distinctly care about is a design decision.
+
+**Using backtraces** (P1B): Another way of handling these problems that incurs some runtime cost is adding backtraces to errors. While `failure` offers facilities for handling backtraces, they are cumbersome to use: Either a specially constructed error type is required which will, in the worst case, require a lot of boilerplate; or the boxed error type `failure::Error` must be used.
+
+Adding backtraces is usually very valuable when P1A-style errors have been coalesced to a point where it is impossible to directly find the call site easily. This is sometimes unavoidable, but more valuable for the library implementer than it is for the consumer.
