@@ -169,3 +169,7 @@ Variant **R9A**: When error handling is not set up properly (during prototyping,
 Especially in embedded contexts, using `Box<Error>` or `failure::Error` must be avoided to not introduce unnecessary heap allocations. In general, no library should return boxed errors.
 
 Exceptions to this guideline are `main` (see `R8`, there is little gain in introducing an error type for main only) and complex functions outside the hot-path in applications where introducing a massive error type bring few gains.
+
+### R11: Always use `failure` and `failure_derive` when possible.
+
+The [failure](https://docs.rs/failure/) crate replaces "manual" error management as well as [error-chain](https://docs.rs/error-chain/). It greatly reduces the amount of boilerplate code and is more flexible than either of the old solutions. Due to its `no_std` compatibility, it is even feasible to use in an embedded environment.
