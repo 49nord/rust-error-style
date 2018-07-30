@@ -160,6 +160,8 @@ Exceptions to this guideline are `main` (see `R7`, there is little gain in intro
 
 The [failure](https://docs.rs/failure/) crate replaces "manual" error management as well as [error-chain](https://docs.rs/error-chain/). It greatly reduces the amount of boilerplate code and is more flexible than either of the old solutions. Due to its `no_std` compatibility, it is even feasible to use in an embedded environment.
 
+The `fmt::Debug` trait implementation of `Fail` types will, if derived, typically print a backtrace and causes.
+
 Currently, community consensus seems be heading towards the failure crate as well.
 
 ## Open Questions
