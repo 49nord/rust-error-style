@@ -317,4 +317,8 @@ impl LoadError {
 
 Note that `LoadError` does not carry any information about the filename of the file the read failed from; this is because it only ever touches a single file that is passed to it via the API. An error type further up the chain should annotate the filename as contextual information in the vein, if it is handling multiple files.
 
-TODO (P2B): Use `failure::Context`
+Using `failure::Context` (P2B): The `failure::Context` type is an alternative for handling contextual info, it comes with significant drawbacks. For one, it only works smooth with `failure::Error` types or when a lot of the machinery to include a context is implemented manually. Otherwise simply writing `.context()` does not work well.
+
+Other than that it is fairly cumbersome to extract information beyond notification strings manually from this context, which makes it suitable mainly for adding additional information for end-users or developers debugging.
+
+However, it adds backtraces by default, which is very convenient in both cases.
