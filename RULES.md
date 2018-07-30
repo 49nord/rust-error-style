@@ -178,7 +178,7 @@ use std::{fs, io, path};
 #[derive(Debug, Fail)]
 enum LoadError {
     ParseError,
-    Io(io::Error)
+    Io(io::Error),
 }
 
 impl From<io::Error> for LoadError {
@@ -242,7 +242,7 @@ For this reason, after having one error type per call site, these variants shoul
 #[derive(Debug, Fail)]
 enum LoadError {
     ParseError,
-    DataFileRead(io::Error)
+    DataFileRead(io::Error),
 }
 ```
 
