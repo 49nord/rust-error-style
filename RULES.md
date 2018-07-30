@@ -251,3 +251,70 @@ Note that `LoadError::DataFileRead` has the same signature as `LoadError::Io` ea
 **Using backtraces** (P1B): Another way of handling these problems that incurs some runtime cost is adding backtraces to errors. While `failure` offers facilities for handling backtraces, they are cumbersome to use: Either a specially constructed error type is required which will, in the worst case, require a lot of boilerplate; or the boxed error type `failure::Error` must be used.
 
 Adding backtraces is usually very valuable when P1A-style errors have been coalesced to a point where it is impossible to directly find the call site easily. This is sometimes unavoidable, but more valuable for the library implementer than it is for the consumer.
+
+### Q2: How to include contextual information into errors?
+
+Another common problem is wanting to include more contextual information into an error:
+
+```rust
+#[derive(Debug, Fail)]
+enum LoadError {
+    Parse(ParseError),
+    DataFileRead(io::Error),
+}
+
+impl From<ParseError> for LoadError {
+    fn from(e: ParseError) -> LoadError {
+        LoadError::Parse(e)
+    }
+}
+
+fn load_from_file<P: AsRef<path::Path>>) -> Result<Data, LoadError> {
+    let buf = fs::read_to_string(p).map(LoadError::DataFileRead)?;
+
+    for line in buf.lines() {
+        let data = parse_line(line)?;
+        // ...
+    }
+}
+```
+
+If an error occurs, additional context is required for the user to pinpoint the cause of the error, such as the line in the file.
+
+**Inline contextual information** (P2A): Additional information can be added directly into the error:
+
+```rust
+#[derive(Debug, Fail)]
+enum LoadError {
+    Parse {
+        line: usize,
+        err: ParseError,
+    },
+    DataFileRead(io::Error),
+}
+
+// ... [inside `load_from_file()`]:
+
+    for (idx, line) in buf.lines().enumerate() {
+        let data = parse_line(line).map_err(|err| LoadError::Parse{ line: idx+1, err })?;
+        // ...
+    }
+```
+
+Convenience functions *may* be added (thanks to `impl Trait`), be aware that they are equivalent to adding a `From<ChainedError>` implementation:
+
+```rust
+impl LoadError {
+    fn parse_line(line: usize) -> impl Fn(ParseError) -> LoadError {
+        move |err| LoadError::Parse { line, err }
+    }
+}
+
+// ...
+
+        let data = parse_line(line).map_err(parse_line(idx+1))?;
+```
+
+Note that `LoadError` does not carry any information about the filename of the file the read failed from; this is because it only ever touches a single file that is passed to it via the API. An error type further up the chain should annotate the filename as contextual information in the vein, if it is handling multiple files.
+
+TODO (P2B): Use `failure::Context`
