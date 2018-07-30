@@ -26,9 +26,11 @@ Documents that inspired this, some of which might be more of a historical read, 
 
 Error handling is dependant on context, different environments have different needs for error handling. The following guidelines assume three different contexts, named and defined as follows:
 
-* **application**: Application is the most common context for executable Rust programs, being ran on an operating system with plenty of memory and computing power.
-* **embedded**: "Heavily resource constrained" would be a better, but less catchy name for this. A low-powered MCU or high-performance code with high performance requirements. The term *embedded* is a bit misleading here; e.g. a Raspberry Pi is much closer to an *application* environment.
-* **library**: Libraries have to serve both contexts well, as they often cannot anticipate which context they are going to be used in. Occasionally one can make assumptions based on what the library does, which may be out of scope for either context.
+<dl>
+<dt>**application**</dt><dd>Application is the most common context for executable Rust programs, being ran on an operating system with plenty of memory and computing power.</dd>
+<dt>**embedded**</dt><dd>"Heavily resource constrained" would be a better, but less catchy name for this. A low-powered MCU or high-performance code with high performance requirements. The term *embedded* is a bit misleading here; e.g. a Raspberry Pi is much closer to an *application* environment.</dd>
+<dt>**library**</dt><dd>Libraries have to serve both contexts well, as they often cannot anticipate which context they are going to be used in. Occasionally one can make assumptions based on what the library does, which may be out of scope for either context.</dd>
+</dl>
 
 ## Rules
 
