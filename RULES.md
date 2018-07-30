@@ -168,7 +168,7 @@ Currently, community consensus seems be heading towards the failure crate as wel
 
 Some patterns present themselves repeatedly and can be addressed in different way; often there is no clear consensus on the best way yet.
 
-### Q1: How to distinguish between the same error on multiple lines?
+### Q1: How to distinguish between the same error on multiple call-sites?
 
 Often, the same error variant can occur multiple times in a single function:
 
