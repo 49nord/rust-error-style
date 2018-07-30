@@ -12,6 +12,7 @@ It it assumed that the reader is a reasonably proficient Rust programmer and awa
 * [`From`/`Into` traits](https://doc.rust-lang.org/rust-by-example/conversion/from_into.html),
 * [the `try!` macro and its replacement](https://doc.rust-lang.org/std/macro.try.html) and
 * [how all these tie together](https://doc.rust-lang.org/book/second-edition/ch09-00-error-handling.html).
+* [RFC 1937: `?` in `main`](https://github.com/rust-lang/rust/issues/43301)
 
 ### Other sources
 
@@ -21,6 +22,7 @@ Documents that inspired this, some of which might be more of a historical read, 
 * [failure docs](https://boats.gitlab.io/failure/),
 * ["Annoucing failure"](https://boats.gitlab.io/blog/post/2017-11-16-announcing-failure/),
 * ["Failure 1.0"](https://boats.gitlab.io/blog/post/2018-02-22-failure-1.0/).
+* [Bay Area Rust Meetup November 2017](https://air.mozilla.org/bay-area-rust-meetup-november-2017/)
 
 ## Definitions
 
