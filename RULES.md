@@ -164,7 +164,7 @@ when using the `?` instead of `.unwrap()`. The extra text cover very little usab
 
 Variant **R9A**: When error handling is not set up properly (during prototyping, when dealing with legacy code), using explicit `.expect()`s instead can be necessary due to R4.
 
-### R10: Avoid boxed errors
+### R10: Avoid boxed errors.
 
 Especially in embedded contexts, using `Box<Error>` or `failure::Error` must be avoided to not introduce unnecessary heap allocations. In general, no library should return boxed errors.
 
