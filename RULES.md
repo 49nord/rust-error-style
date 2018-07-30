@@ -23,6 +23,7 @@ Documents that inspired this, some of which might be more of a historical read, 
 * ["Annoucing failure"](https://boats.gitlab.io/blog/post/2017-11-16-announcing-failure/),
 * ["Failure 1.0"](https://boats.gitlab.io/blog/post/2018-02-22-failure-1.0/).
 * [Bay Area Rust Meetup November 2017](https://air.mozilla.org/bay-area-rust-meetup-november-2017/)
+* [Redefining failure] (Ed Page)](https://epage.github.io/blog/2018/03/redefining-failure/)
 
 ## Definitions
 
