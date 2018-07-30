@@ -39,7 +39,7 @@ Error handling is dependant on context, different environments have different ne
 
 ### R1: Use panics when the caller violates the API, return `Err` otherwise.
 
-Every function has invariants that need to hold true about its inputs; some of which cannot be expressed through the type system. Providing correct inputs to a function is the callers job, to avoid conflating the API with error handling for programming errors, panics (through `assert!`, `panic!` or similar) should be used instead, as precedented by the standard library.
+Every function has invariants that need to hold true for its inputs; some of which cannot be expressed through the type system. Providing correct inputs to a function is the callers job, to avoid conflating the API with error handling for programming errors, panics (through `assert!`, `panic!` or similar) should be used instead, as precedented by the standard library.
 
 Example: [`Vec::split_off()`](https://doc.rust-lang.org/stable/std/vec/struct.Vec.html#method.split_off).
 
