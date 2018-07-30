@@ -1,0 +1,93 @@
+# An error-style guide
+
+This document tries to provide a set of rules and guidelines to help with error-handling best-practices[^1].
+
+[^1]: Or more honestly, perform a lot of *bikeshedding*.
+
+## Preqrequisites
+
+It it assumed that the reader is a reasonably proficient Rust programmer and aware of at least the following concepts:
+
+* [Algebraic data types (in Rust)](https://doc.rust-lang.org/book/second-edition/ch06-00-enums.html),
+* [`From`/`Into` traits](https://doc.rust-lang.org/rust-by-example/conversion/from_into.html),
+* [the `try!` macro and its replacement](https://doc.rust-lang.org/std/macro.try.html) and
+* [how all these tie together](https://doc.rust-lang.org/book/second-edition/ch09-00-error-handling.html).
+
+### Other sources
+
+Documents that inspired this, some of which might be more of a historical read, are
+
+* ["Error Handling in Rust" (Andrew Gallant)](https://blog.burntsushi.net/rust-error-handling/),
+* [failure docs](https://boats.gitlab.io/failure/),
+* ["Annoucing failure"](https://boats.gitlab.io/blog/post/2017-11-16-announcing-failure/),
+* ["Failure 1.0"](https://boats.gitlab.io/blog/post/2018-02-22-failure-1.0/).
+
+## Definitions
+
+Error handling is dependant on context, different environments have different needs for error handling. The following guidelines assume three different contexts, named and defined as follows:
+
+* **application**: Application is the most common context for executable Rust programs, being ran on an operating system with plenty of memory and computing power.
+* **embedded**: "Heavily resource constrained" would be a better, but less catchy name for this. A low-powered MCU or high-performance code with high performance requirements. The term *embedded* is a bit misleading here; e.g. a Raspberry Pi is much closer to an *application* environment.
+* **library**: Libraries have to serve both contexts well, as they often cannot anticipate which context they are going to be used in. Occasionally one can make assumptions based on what the library does, which may be out of scope for either context.
+
+## Rules
+
+### R1: Use panics when the caller violates the API, return `Err` otherwise.
+
+Every function has invariants that need to hold true about its inputs; some of which cannot be expressed through the type system. Providing correct inputs to a function is the callers job, to avoid conflating the API with error handling for programming errors, panics (through `assert!`, `panic!` or similar) should be used instead, as precedented by the standard library.
+
+Example: [`Vec::split_off()`](https://doc.rust-lang.org/stable/std/vec/struct.Vec.html#method.split_off).
+
+**R1A**: It is possible to move some or all of the error handling back into the return value (`Result` or `Option`) if doing reduces the burden on the caller significantly or enables common use cases.
+
+Example: [`Vec::pop()`](https://doc.rust-lang.org/stable/std/vec/struct.Vec.html#method.pop).
+
+### R2: Use `assert!` instead of `if .. { panic! }`
+
+Instead of using
+
+```rust
+if user_id <= 0 {
+    panic!("user_id must be greater than zero");
+}
+```
+
+use `assert!`:
+
+```rust
+assert!(user_id <= 0, "user_id must be greater than zero");
+```
+
+### R3: Use newtype to avoid having to handle err
+
+When having to restrict input domains for a value in a non-trivial way, newtypes should be used to restrict it. This allows turning a panic into an error by moving the error into the appropriate domain:
+
+```rust
+#[derive(Debug)]
+struct UserId(usize);
+
+// Error/Fail impl omitted.
+struct UserIdInvalid {}
+
+impl Into<usize> for UserId {
+    fn into(self) -> usize {
+        self.0
+    }
+}
+
+impl TryFrom<usize> for UserId {
+    type Error;
+
+    fn try_from(value: usize) -> Result<Self, Self::Error> {
+        if value <= 0 {
+            return Err(UserIdInvalid);
+        }
+
+        UserId(value)
+    }
+}
+
+fn get_user_from_db(user_id: UserId) -> Result<User, DbError> {
+    // ...
+}
+```
