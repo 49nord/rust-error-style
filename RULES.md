@@ -4,7 +4,7 @@ This document tries to provide a set of rules and guidelines to help with error-
 
 [^1]: Or more honestly, perform a lot of *bikeshedding*.
 
-## Preqrequisites
+## Prerequisites
 
 It it assumed that the reader is a reasonably proficient Rust programmer and aware of at least the following concepts:
 
@@ -23,14 +23,14 @@ Documents that inspired this, some of which might be more of a historical read, 
 * ["Annoucing failure"](https://boats.gitlab.io/blog/post/2017-11-16-announcing-failure/),
 * ["Failure 1.0"](https://boats.gitlab.io/blog/post/2018-02-22-failure-1.0/).
 * [Bay Area Rust Meetup November 2017](https://air.mozilla.org/bay-area-rust-meetup-november-2017/)
-* [Redefining failure] (Ed Page)](https://epage.github.io/blog/2018/03/redefining-failure/)
+* [Redefining failure (Ed Page)](https://epage.github.io/blog/2018/03/redefining-failure/)
 
 ## Definitions
 
-Error handling is dependant on context, different environments have different needs for error handling. The following guidelines assume three different contexts, named and defined as follows:
+Error handling is dependent on context, different environments have different needs for error handling. The following guidelines assume three different contexts, named and defined as follows:
 
 <dl>
-<dt>**application**</dt><dd>Application is the most common context for executable Rust programs, being ran on an operating system with plenty of memory and computing power.</dd>
+<dt>**application**</dt><dd>Application is the most common context for executable Rust programs, being run on an operating system with plenty of memory and computing power.</dd>
 <dt>**embedded**</dt><dd>"Heavily resource constrained" would be a better, but less catchy name for this. A low-powered MCU or high-performance code with high performance requirements. The term *embedded* is a bit misleading here; e.g. a Raspberry Pi is much closer to an *application* environment.</dd>
 <dt>**library**</dt><dd>Libraries have to serve both contexts well, as they often cannot anticipate which context they are going to be used in. Occasionally one can make assumptions based on what the library does, which may be out of scope for either context.</dd>
 </dl>
@@ -248,7 +248,7 @@ enum LoadError {
 }
 ```
 
-Note that `LoadError::DataFileRead` has the same signature as `LoadError::Io` earlier has no direct `From<io::Error>`, leaving the class extensible in case another-but-different error occurs. This should also be done to simplify the error type, deciding which kinds of errors the client is allowed to distinctly care about is a design decision.
+Note that `LoadError::DataFileRead` has the same signature as `LoadError::Io` earlier, but has no direct `From<io::Error>`, leaving the class extensible in case another-but-different error occurs. This should also be done to simplify the error type, deciding which kinds of errors the client is allowed to distinctly care about is a design decision.
 
 #### P1B: Using backtraces
 
@@ -258,7 +258,7 @@ Adding backtraces is usually very valuable when P1A-style errors have been coale
 
 ### Q2: How to include contextual information into errors?
 
-Another common problem is wanting to include more contextual information into an error:
+Another common problem is wanting to include more contextual information in an error:
 
 ```rust
 #[derive(Debug, Fail)]
