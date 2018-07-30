@@ -176,7 +176,7 @@ Often, the same error variant can occur multiple times in a single function:
 use std::{fs, io, path};
 
 #[derive(Debug, Fail)]
-enum LoadError{
+enum LoadError {
     ParseError,
     Io(io::Error)
 }
@@ -206,7 +206,7 @@ Here, `LoadError::Io` is returned in two different places, with no distinction p
 
 ```rust
 #[derive(Debug, Fail)]
-enum LoadError{
+enum LoadError {
     ParseError,
     OpenDataFile(io::Error),
     ReadDataFile(io::Error),
@@ -230,7 +230,7 @@ There are drawbacks: No more `From<io::Error>` conversions due to ambiguity, res
 
 ```rust
 fn load_from_file<P: AsRef<path::Path>>) -> Result<Data, LoadError> {
-    let buf = fs::read_to_string(p).map(/* which error type to map to? */?;
+    let buf = fs::read_to_string(p).map(/* which error type to map to? */)?;
 
     // ...
 }
@@ -240,7 +240,7 @@ For this reason, after having one error type per call site, these variants shoul
 
 ```rust
 #[derive(Debug, Fail)]
-enum LoadError{
+enum LoadError {
     ParseError,
     DataFileRead(io::Error)
 }
