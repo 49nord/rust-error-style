@@ -42,7 +42,7 @@ Every function has invariants that need to hold true about its inputs; some of w
 
 Example: [`Vec::split_off()`](https://doc.rust-lang.org/stable/std/vec/struct.Vec.html#method.split_off).
 
-Variant **R1A**: It is possible to move some or all of the error handling back into the return value (`Result` or `Option`) if doing reduces the burden on the caller significantly or enables common use cases.
+Variant **R1A**: It is possible to move some or all of the error handling back into the return value (`Result` or `Option`) if doing so reduces the burden on the caller significantly or enables common use cases.
 
 Example: [`Vec::pop()`](https://doc.rust-lang.org/stable/std/vec/struct.Vec.html#method.pop).
 
@@ -62,9 +62,9 @@ use `assert!`:
 assert!(user_id <= 0, "user_id must be greater than zero");
 ```
 
-### R3: Use newtype to avoid having to handle err
+### R3: Use newtypes to avoid having to panic on API violations.
 
-When having to restrict input domains for a value in a non-trivial way, newtypes should be used to restrict it. This allows turning a panic into an error by moving the error into the appropriate domain:
+When having to restrict input domains for a value in a non-trivial way, newtypes should be used to restrict it. This allows turning a panic into an error by moving the conversion outside the function call:
 
 ```rust
 #[derive(Debug)]
@@ -73,15 +73,12 @@ struct UserId(usize);
 // Error/Fail impl omitted.
 struct UserIdInvalid {}
 
-impl Into<usize> for UserId {
-    fn into(self) -> usize {
-        self.0
-    }
-}
-
 impl TryFrom<usize> for UserId {
     type Error;
 
+    // `try_from` is a conversion function, a failing input value is within the
+    // realm of possible outcomes and not an API violation. This avoids a panic
+    // in `get_user_from_db`.
     fn try_from(value: usize) -> Result<Self, Self::Error> {
         if value <= 0 {
             return Err(UserIdInvalid);
@@ -98,7 +95,7 @@ fn get_user_from_db(user_id: UserId) -> Result<User, DbError> {
 
 ### R4: Prefer `.expect()` over `.unwrap()`.
 
-`.expect()` is the same as `.unwrap()`, except it allows adding a custom message. This is vastly preferrable over a comment:
+`.expect()` is the same as `.unwrap()`, except it allows adding a custom message, which in turn is vastly preferrable over a comment:
 
 ```rust
 value.expect("operation did not return meaningful value");
@@ -118,15 +115,15 @@ fs::File::open("foo.txt").expect("could not open data file");
 
 A panic will cause the currently running thread to end, which might abort the program or put it in a state where a thread is dead. This makes it impossible for callers to recover.
 
-Never use `.expect()` (see R4) in libraries unless unavoidable due to borrow-checker limitations or expensive design flaws. When doing so, add a comment (in addition to the message from R5) explaining why `.expect()` was used in the first place.
+Never use `.expect()` (see R4) in libraries unless unavoidable due to borrow-checker limitations or expensive design flaws. When doing so, add a comment (in addition to the message from R5) explaining why `.expect()` was used in the first place and why it will (ideally) never be triggered.
 
-In general, code will be inspected and every potential panic should have a good, described reason for being there.
+In general, code will be inspected and every potential panic should have a good, well described reason for being there.
 
 ### R7: Bubble errors upwards when not handled.
 
 When errors cannot be handled in a function, they should be passed up the call stack. Ultimately, any error not handled should arrive (possibly wrapped multiple times) in the `main()` function.
 
-### R8: Use error returns in `main`.
+### R8: Use error returns in `main` instead of unwrapping.
 
 In applications, defining main with a (see [RFC 1937](https://github.com/rust-lang/rust/issues/43301)) `Result` return type like
 
@@ -156,7 +153,7 @@ Variant **R8A**: When error handling is not set up properly (during prototyping,
 
 Especially in embedded contexts, using `Box<Error>` or `failure::Error` must be avoided to not introduce unnecessary heap allocations. In general, no library should return boxed errors.
 
-Exceptions to this guideline are `main` (see `R7`, there is little gain in introducing an error type for main only) and complex functions outside the hot-path in applications where introducing a massive error type bring few gains.
+Exceptions to this guideline are `main` (see `R7`, there is little gain in introducing an error type for main only) and complex functions outside the hot-path in applications where introducing a massive error type would yield little gains.
 
 ### R10: Always use `failure` and `failure_derive` when possible.
 
@@ -166,11 +163,11 @@ Currently, community consensus seems be heading towards the failure crate as wel
 
 ## Open Questions
 
-Some patterns present themselves repeatedly and can be addressed in different way; often there is no clear consensus on the best way yet.
+Some patterns present themselves repeatedly and can be addressed in a different way, although most of the time there is no obvious best pattern yet.
 
 ### Q1: How to distinguish between the same error on multiple call-sites?
 
-Often, the same error variant can occur multiple times in a single function:
+The same error variant can occur multiple times in a single function:
 
 ```rust
 use std::{fs, io, path};
@@ -202,7 +199,9 @@ fn load_from_file<P: AsRef<path::Path>>) -> Result<Data, LoadError> {
 
 Here, `LoadError::Io` is returned in two different places, with no distinction possible by the consumer of said error.
 
-**Bottom-up error variant definition** (P1A): Solve the problem by defining one error variant per call-site:
+#### P1A: Bottom-up error variant definition
+
+Solve the problem by defining one error variant per call-site:
 
 ```rust
 #[derive(Debug, Fail)]
@@ -236,7 +235,7 @@ fn load_from_file<P: AsRef<path::Path>>) -> Result<Data, LoadError> {
 }
 ```
 
-For this reason, after having one error type per call site, these variants should be coalesced into fewer that carry enough meaning but hide implementation details. Example:
+For this reason, after introducing one error type per call site, these variants should be coalesced into fewer that are sufficiently fine-grained but abstract away implementation details. Example:
 
 ```rust
 #[derive(Debug, Fail)]
@@ -248,9 +247,11 @@ enum LoadError {
 
 Note that `LoadError::DataFileRead` has the same signature as `LoadError::Io` earlier has no direct `From<io::Error>`, leaving the class extensible in case another-but-different error occurs. This should also be done to simplify the error type, deciding which kinds of errors the client is allowed to distinctly care about is a design decision.
 
-**Using backtraces** (P1B): Another way of handling these problems that incurs some runtime cost is adding backtraces to errors. While `failure` offers facilities for handling backtraces, they are cumbersome to use: Either a specially constructed error type is required which will, in the worst case, require a lot of boilerplate; or the boxed error type `failure::Error` must be used.
+#### P1B: Using backtraces
 
-Adding backtraces is usually very valuable when P1A-style errors have been coalesced to a point where it is impossible to directly find the call site easily. This is sometimes unavoidable, but more valuable for the library implementer than it is for the consumer.
+Another way of handling these problems that incurs some runtime cost is adding backtraces to errors. While `failure` offers facilities for handling backtraces, they are cumbersome to use: Either a specially constructed error type is required which will, in the worst case, require a lot of boilerplate; or the boxed error type `failure::Error` must be used.
+
+Adding backtraces is usually very valuable when P1A-style errors have been coalesced to a point where it is impossible to directly find the call site easily. This is sometimes unavoidable, but more valuable for the library implementer than it is for its consumer.
 
 ### Q2: How to include contextual information into errors?
 
@@ -281,7 +282,9 @@ fn load_from_file<P: AsRef<path::Path>>) -> Result<Data, LoadError> {
 
 If an error occurs, additional context is required for the user to pinpoint the cause of the error, such as the line in the file.
 
-**Inline contextual information** (P2A): Additional information can be added directly into the error:
+#### P2A: **Inline contextual information**
+
+Additional information can be added directly into the error:
 
 ```rust
 #[derive(Debug, Fail)]
@@ -301,7 +304,7 @@ enum LoadError {
     }
 ```
 
-Convenience functions *may* be added (thanks to `impl Trait`), be aware that they are equivalent to adding a `From<ChainedError>` implementation:
+Convenience functions *may* be added (thanks to `impl Trait`), be aware that they are almost equivalent to adding a `From<ParseError>` implementation:
 
 ```rust
 impl LoadError {
@@ -315,10 +318,12 @@ impl LoadError {
         let data = parse_line(line).map_err(parse_line(idx+1))?;
 ```
 
-Note that `LoadError` does not carry any information about the filename of the file the read failed from; this is because it only ever touches a single file that is passed to it via the API. An error type further up the chain should annotate the filename as contextual information in the vein, if it is handling multiple files.
+Note that `LoadError` does not carry any information about the filename of the file the read failed from; this is because it only ever touches a single file that is passed to it via the API. An error type further up the chain should annotate the filename as contextual information in the same vein, if it is handling multiple files.
 
-Using `failure::Context` (P2B): The `failure::Context` type is an alternative for handling contextual info, it comes with significant drawbacks. For one, it only works smooth with `failure::Error` types or when a lot of the machinery to include a context is implemented manually. Otherwise simply writing `.context()` does not work well.
+#### P2B: Using `failure::Context`
 
-Other than that it is fairly cumbersome to extract information beyond notification strings manually from this context, which makes it suitable mainly for adding additional information for end-users or developers debugging.
+The `failure::Context` type is an alternative for handling contextual info, it comes with significant drawbacks. For one, it only works smooth with `failure::Error` types or when a lot of the machinery to include a context is implemented manually. Otherwise simply writing `.context()` does not work well.
+
+Other than that it is fairly cumbersome to extract information beyond descriptive strings manually from this context, which makes it only suitable for adding additional information for end-users or developers debugging.
 
 However, it adds backtraces by default, which is very convenient in both cases.
