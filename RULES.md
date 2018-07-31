@@ -1,8 +1,9 @@
-# An error-style guide
+# An error-style code
 
-This document tries to provide a set of rules and guidelines to help with error-handling best-practices[^1].
+This document tries to provide a set of rules to help with error-handling best-practices[^1]. As Rust error handling is still a constantly evolving story, these should not be considered hard rules but guidelines[^2] instead.
 
 [^1]: Or more honestly, perform a lot of *bikeshedding*.
+[^2]: [Application suggestions](https://www.youtube.com/watch?v=WJVBvvS57j0)
 
 ## Prerequisites
 
