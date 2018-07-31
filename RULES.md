@@ -106,10 +106,44 @@ Variant **R4A**: In some embedded cases such as microcontrollers with mere kilob
 
 ### R5: Use lower-case, simple messages for `.expect()`.
 
-When used, `.expect()` messages should be short, start lowercase and report what went wrong. Contrary to the name, it should *not* state what was expected.
+When used, `.expect()` messages, start lowercase and report what went wrong. Contrary to the name, it should *not* state what was expected, but rather what failed:
 
 ```rust
-fs::File::open("foo.txt").expect("could not open data file");
+let mut wrap_cc = env::current_exe().expect("failed to get cwd");
+                       .arg(&url)
+                       .status()
+                       .expect("failed to spawn curl");
+```
+
+These messages are often read in isolation, without a call-stack and for this reason should include some indication of the cause of the error. They are aimed at the consumer to help them fix their API misuse.
+
+Variant **R5A**: Better `.expect()` messages can optionally be achieved by wrapping errors in a private error type and printing it using `fmt::Debug` or `fmt::Display`:
+
+```rust
+use std::fmt;
+
+#[derive(Debug, Fail)]
+#[fail(display =
+  "the given value of {} for `{}` is outside the valid range of {:?}-{:?}",
+  value, name, low, high)]
+struct ValueOutOfRange<T: fmt::Debug> {
+    name: &'static str,
+    low: Option<T>,
+    high: Option<T>,
+    value: T,
+}
+
+// ...
+
+if (temp < 10 || temp > 32) {
+    panic!("{}",
+          ValueOfOutRange{
+              name: "temp",
+              low: 10,
+              high: 32,
+              value: temp
+          })
+}
 ```
 
 ### R6: Avoid unwraps, unless mandated by R1.
